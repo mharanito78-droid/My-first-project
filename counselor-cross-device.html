@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNHS Counselor Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+
+        .login-wrapper {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 420px;
+            width: 100%;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .dashboard-wrapper {
+            display: none;
+        }
+
+        .dashboard-wrapper.active {
+            display: block;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+            color: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .navbar-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .navbar h1 {
+            font-size: 26px;
+            font-weight: 700;
+        }
+
+        .navbar-info {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+
+        .nav-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .sync-indicator {
+            background: rgba(255,255,255,0.2);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sync-dot {
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .logout-btn, .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover, .refresh-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .dashboard-content {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 30px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card.urgent { border-left-color: #e74c3c; }
+        .stat-card.pending { border-left-color: #f39c12; }
+        .stat-card.resolved { border-left-color: #27ae60; }
+
+        .stat-number {
+            font-size: 42px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.urgent .stat-number { color: #e74c3c; }
+        .stat-card.pending .stat-number { color: #f39c12; }
+        .stat-card.resolved .stat-number { color: #27ae60; }
+
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-bar select, .filter-bar input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .filter-bar input[type="text"] {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .report-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+
+        .report-header.urgent {
+            background: #fff5f5;
+            border-left-color: #e74c3c;
+        }
+
+        .badge-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-urgent { background: #fee; color: #e74c3c; }
+        .badge-pending { background: #fff4e6; color: #f39c12; }
+        .badge-in-progress { background: #e3f2fd; color: #2196f3; }
+        .badge-resolved { background: #d4edda; color: #27ae60; }
+
+        .report-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .meta-item strong { color: #333; }
+
+        .report-body {
+            padding: 20px;
+        }
+
+        .info-row {
+            margin-bottom: 15px;
+        }
+
+        .info-row label {
+            font-weight: 700;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .info-content {
+            color: #666;
+            line-height: 1.6;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+        }
+
+        .problem-text {
+            background: #fff9e6;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #f39c12;
+            line-height: 1.7;
+        }
+
+        .report-actions {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-start { background: #3498db; color: white; }
+        .btn-resolve { background: #27ae60; color: white; }
+        .btn-reopen { background: #95a5a6; color: white; }
+
+        .btn-start:hover { background: #2980b9; }
+        .btn-resolve:hover { background: #229954; }
+        .btn-reopen:hover { background: #7f8c8d; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.show { display: block; }
+        .alert-error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <!-- LOGIN -->
+    <div class="login-wrapper" id="loginWrapper">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🔒 Counselor Access</h1>
+                <p>DNHS Guidance Dashboard</p>
+            </div>
+
+            <div id="loginAlert" class="alert"></div>
+
+            <form id="counselorLoginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label>Counselor ID</label>
+                    <input type="text" id="counselorId" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="counselorPassword" required>
+                </div>
+
+                <button type="submit" class="action-btn btn-start" style="width: 100%;">
+                    ACCESS DASHBOARD
+                </button>
+            </form>
+
+            <p style="text-align: center; margin-top: 20px; font-size: 13px; color: #999;">
+                Demo: <strong>counselor1</strong> / <strong>dnhs2024</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="dashboard-wrapper" id="dashboardWrapper">
+        <nav class="navbar">
+            <div class="navbar-content">
+                <div>
+                    <h1>📊 Dashboard</h1>
+                    <div class="navbar-info" id="counselorInfo">Welcome</div>
+                </div>
+                <div class="nav-right">
+                    <div class="sync-indicator">
+                        <div class="sync-dot"></div>
+                        <span id="syncStatus">OFFLINE</span>
+                    </div>
+                    <button class="refresh-btn" onclick="loadReports()">🔄</button>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="dashboard-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalCount">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card urgent">
+                    <div class="stat-number" id="urgentCount">0</div>
+                    <div class="stat-label">Urgent</div>
+                </div>
+                <div class="stat-card pending">
+                    <div class="stat-number" id="pendingCount">0</div>
+                    <div class="stat-label">Pending</div>
+                </div>
+                <div class="stat-card resolved">
+                    <div class="stat-number" id="resolvedCount">0</div>
+                    <div class="stat-label">Resolved</div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <select id="buildingFilter" onchange="renderReports()">
+                    <option value="">All Buildings</option>
+                    <option value="JDL Building">JDL</option>
+                    <option value="TSL Building">TSL</option>
+                    <option value="PPP Building">PPP</option>
+                    <option value="JAICA Building">JAICA</option>
+                    <option value="DEPED Bldg 1">DEPED 1</option>
+                    <option value="DEPED Bldg 2">DEPED 2</option>
+                    <option value="DPWH Bldg 2">DPWH 2</option>
+                    <option value="DPWH Bldg 3">DPWH 3</option>
+                    <option value="AUB AID">AUB AID</option>
+                    <option value="Library">Library</option>
+                    <option value="Arago">Arago</option>
+                </select>
+
+                <select id="statusFilter" onchange="renderReports()">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="resolved">Resolved</option>
+                </select>
+
+                <select id="urgencyFilter" onchange="renderReports()">
+                    <option value="">All</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="normal">Normal</option>
+                </select>
+
+                <input type="text" id="searchInput" placeholder="Search..." oninput="renderReports()">
+            </div>
+
+            <div id="reportsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const counselors = {
+            'counselor1': { password: 'dnhs2024', name: 'Ms. Garcia' },
+            'counselor2': { password: 'dnhs2024', name: 'Mr. Santos' }
+        };
+
+        let currentCounselor = null;
+        let allReports = [];
+        let storageMode = null;
+
+        const storage = {
+            async get(key) {
+                return JSON.parse(localStorage.getItem(key) || '[]');
+            },
+            async set(key, value) {
+                localStorage.setItem(key, JSON.stringify(value));
+            }
+        };
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const id = document.getElementById('counselorId').value.trim();
+            const password = document.getElementById('counselorPassword').value.trim();
+
+            if (counselors[id] && counselors[id].password === password) {
+                currentCounselor = counselors[id];
+                document.getElementById('loginWrapper').style.display = 'none';
+                document.getElementById('dashboardWrapper').classList.add('active');
+                document.getElementById('counselorInfo').textContent = `${currentCounselor.name}`;
+                
+                storageMode = localStorage.getItem('dnhs_storage_mode') || 'local';
+                document.getElementById('syncStatus').textContent = 
+                    storageMode === 'jsonbin' ? 'ONLINE' : 'OFFLINE';
+                
+                loadReports();
+                setInterval(loadReports, 30000); // Auto-refresh
+            } else {
+                showAlert('loginAlert', '❌ Invalid!', 'error');
+            }
+        }
+
+        function handleLogout() {
+            currentCounselor = null;
+            document.getElementById('dashboardWrapper').classList.remove('active');
+            document.getElementById('loginWrapper').style.display = 'flex';
+            document.getElementById('counselorLoginForm').reset();
+        }
+
+        async function loadReports() {
+            allReports = await storage.get('dnhs_reports');
+            updateStats();
+            renderReports();
+        }
+
+        function updateStats() {
+            document.getElementById('totalCount').textContent = allReports.length;
+            document.getElementById('urgentCount').textContent = allReports.filter(r => r.urgent).length;
+            document.getElementById('pendingCount').textContent = allReports.filter(r => r.status === 'pending').length;
+            document.getElementById('resolvedCount').textContent = allReports.filter(r => r.status === 'resolved').length;
+        }
+
+        function renderReports() {
+            const container = document.getElementById('reportsContainer');
+            const buildingFilter = document.getElementById('buildingFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const urgencyFilter = document.getElementById('urgencyFilter').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+
+            let filtered = allReports.filter(r => {
+                if (buildingFilter && r.building !== buildingFilter) return false;
+                if (statusFilter && r.status !== statusFilter) return false;
+                if (urgencyFilter === 'urgent' && !r.urgent) return false;
+                if (urgencyFilter === 'normal' && r.urgent) return false;
+                if (searchText && !JSON.stringify(r).toLowerCase().includes(searchText)) return false;
+                return true;
+            });
+
+            filtered.sort((a, b) => {
+                if (a.urgent && !b.urgent) return -1;
+                if (!a.urgent && b.urgent) return 1;
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>No Reports</h3>
+                        <p>No reports match filters</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = filtered.map(r => {
+                const date = new Date(r.timestamp);
+                return `
+                    <div class="report-card">
+                        <div class="report-header ${r.urgent ? 'urgent' : ''}">
+                            <div class="badge-row">
+                                ${r.urgent ? '<span class="badge badge-urgent">⚠️ URGENT</span>' : ''}
+                                <span class="badge badge-${r.status}">${r.status.toUpperCase()}</span>
+                            </div>
+                            <div class="report-meta">
+                                <div class="meta-item">📍 <strong>${r.building}</strong></div>
+                                <div class="meta-item">🆔 ${r.studentId}</div>
+                                <div class="meta-item">👨‍🏫 ${r.adviser}</div>
+                                <div class="meta-item">📚 ${r.section}</div>
+                                <div class="meta-item">📅 ${date.toLocaleDateString()} ${date.toLocaleTimeString()}</div>
+                            </div>
+                        </div>
+                        <div class="report-body">
+                            <div class="info-row">
+                                <label>Name:</label>
+                                <div class="info-content">${r.studentName}</div>
+                            </div>
+                            <div class="info-row">
+                                <label>Problem:</label>
+                                <div class="problem-text">${r.problem}</div>
+                            </div>
+                        </div>
+                        <div class="report-actions">
+                            ${getActions(r)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getActions(r) {
+            if (r.status === 'pending') {
+                return `<button class="action-btn btn-start" onclick="changeStatus('${r.id}', 'in-progress')">Start</button>`;
+            } else if (r.status === 'in-progress') {
+                return `<button class="action-btn btn-resolve" onclick="changeStatus('${r.id}', 'resolved')">Resolve</button>`;
+            } else {
+                return `<button class="action-btn btn-reopen" onclick="changeStatus('${r.id}', 'pending')">Reopen</button>`;
+            }
+        }
+
+        async function changeStatus(id, status) {
+            allReports = allReports.map(r => {
+                if (r.id === id) r.status = status;
+                return r;
+            });
+            await storage.set('dnhs_reports', allReports);
+            loadReports();
+        }
+
+        function showAlert(containerId, message, type) {
+            const alert = document.getElementById(containerId);
+            alert.className = `alert alert-${type} show`;
+            alert.innerHTML = message;
+            setTimeout(() => alert.classList.remove('show'), 4000);
+        }
+    </script>
+</body>
+</html>
